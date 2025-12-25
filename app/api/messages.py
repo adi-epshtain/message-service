@@ -1,7 +1,9 @@
 """Message API endpoints."""
 
+from sqlalchemy.exc import SQLAlchemyError
+
 from app.core.logging import logger
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, HTTPException, Query, status
 
 from app.db.session import DbSession
 from app.schemas.message import MessageCreate, MessageRead, PaginatedMessages
@@ -23,10 +25,21 @@ def create_message_endpoint(
 
     Returns:
         The created message.
+
+    Raises:
+        HTTPException: If database error occurs.
     """
-    message = create_message(db, data)
-    logger.info("Message created", extra={"message_id": message.id, "room_id": message.room_id})
-    return MessageRead.model_validate(message)
+    try:
+        message = create_message(db, data)
+        logger.info("Message created", extra={"message_id": message.id, "room_id": message.room_id})
+        return MessageRead.model_validate(message)
+    except SQLAlchemyError as e:
+        logger.error("Database error creating message", extra={"error": str(e)})
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to create message",
+        )
 
 
 @router.get("/rooms/{room_id}/messages", response_model=PaginatedMessages)
@@ -45,13 +58,33 @@ def get_room_messages(
         offset: Number of messages to skip.
 
     Returns:
-        Paginated messages response.
+        Paginated messages response. Returns empty list if no messages found.
+
+    Raises:
+        HTTPException: If room does not exist (404) or database error occurs (500).
     """
-    messages, total = get_messages_by_room(db, room_id, limit, offset)
-    logger.info("Retrieved room messages", extra={"room_id": room_id, "count": len(messages), "total": total})
-    return PaginatedMessages(
-        items=[MessageRead.model_validate(msg) for msg in messages],
-        total=total,
-        limit=limit,
-        offset=offset,
-    )
+    try:
+        messages, total = get_messages_by_room(db, room_id, limit, offset)
+        
+        # Optional: Return 404 if room has never had messages (first page, no results)
+        if total == 0 and offset == 0:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Room '{room_id}' not found",
+            )
+        
+        logger.info("Retrieved room messages", extra={"room_id": room_id, "count": len(messages), "total": total})
+        return PaginatedMessages(
+            items=[MessageRead.model_validate(msg) for msg in messages],
+            total=total,
+            limit=limit,
+            offset=offset,
+        )
+    except HTTPException:
+        raise
+    except SQLAlchemyError as e:
+        logger.error("Database error retrieving messages", extra={"room_id": room_id, "error": str(e)})
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve messages",
+        )
