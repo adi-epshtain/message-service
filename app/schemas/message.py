@@ -1,0 +1,2 @@
+"""Message Pydantic schemas."""
+
