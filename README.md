@@ -50,6 +50,17 @@ The API will be available at `http://localhost:8000`
 
 API documentation (Swagger UI) is available at `http://localhost:8000/docs`
 
+## How to Run with Docker
+
+### Using Docker Compose
+
+```bash
+docker-compose up --build
+```
+
+The API will be available at `http://localhost:8000`
+
+
 ## How to Run Tests
 
 ```bash
