@@ -6,6 +6,7 @@ from app.core.logging import logger
 from fastapi import APIRouter, HTTPException, Query, status
 
 from app.db.session import DbSession
+from app.models import Message
 from app.schemas.message import MessageCreate, MessageRead, PaginatedMessages
 from app.services.messages import create_message, get_messages_by_room
 
@@ -30,7 +31,7 @@ def create_message_endpoint(
         HTTPException: If database error occurs.
     """
     try:
-        message = create_message(db, data)
+        message: Message = create_message(db, data)
         logger.info("Message created", extra={"message_id": message.id, "room_id": message.room_id})
         return MessageRead.model_validate(message)
     except SQLAlchemyError as e:
