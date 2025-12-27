@@ -82,8 +82,12 @@ tests/
 ## 🧪 Testing
 - Use **pytest**
 - Write:
-- Happy path tests
-- Negative / edge case tests
+  - API tests for endpoint behavior (FastAPI TestClient)
+  - Unit tests for **service layer** (business logic, mocked DAL)
+  - Unit tests for **DAL** (queries, ordering, pagination)
+- Cover:
+  - Happy paths
+  - Negative / edge cases
 - Tests should validate **behavior**, not implementation
 
 ---
