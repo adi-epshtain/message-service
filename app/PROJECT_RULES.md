@@ -14,6 +14,18 @@ Development is done step-by-step using **Cursor IDE with short, scoped prompts**
 - Scope is intentionally limited
 
 ---
+## 🛠️ Technologies Used
+
+- **Language**: Python 3.11
+- **Web Framework**: FastAPI
+- **Data Validation**: Pydantic
+- **ORM**: SQLAlchemy
+- **Database**: SQLite (for interview/demo purposes)
+- **Testing**: pytest
+- **Containerization**: Docker, docker-compose
+- **Logging**: Structured JSON logging
+- **AI Assistance**: Cursor IDE (used as a coding assistant)
+---
 
 ## 🧱 Architecture & Structure
 - Clean project structure (example):
