@@ -10,7 +10,7 @@ from app.models import Message
 from app.schemas.message import MessageCreate, MessageRead, PaginatedMessages
 from app.services.messages import create_message, get_messages_by_room
 
-router = APIRouter()
+router = APIRouter(prefix="/api/v1", tags=["messages"])
 
 
 @router.post("/messages", response_model=MessageRead, status_code=201)

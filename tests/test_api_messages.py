@@ -5,16 +5,16 @@ from fastapi import status
 
 
 class TestCreateMessage:
-    """Tests for POST /messages endpoint."""
+    """Tests for POST /api/v1/messages endpoint."""
 
     def test_create_message_success(self, client):
-        """Happy path: POST /messages returns 201 and correct payload."""
+        """Happy path: POST /api/v1/messages returns 201 and correct payload."""
         payload = {
             "room_id": "room-123",
             "sender": "user-1",
             "content": "Hello, world!",
         }
-        response = client.post("/messages", json=payload)
+        response = client.post("/api/v1/messages", json=payload)
 
         assert response.status_code == status.HTTP_201_CREATED
         data = response.json()
@@ -31,7 +31,7 @@ class TestCreateMessage:
             "sender": "user-1",
             # Missing 'content' field
         }
-        response = client.post("/messages", json=payload)
+        response = client.post("/api/v1/messages", json=payload)
 
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
 
@@ -42,7 +42,7 @@ class TestCreateMessage:
             "sender": "user-1",
             "content": "Hello, world!",
         }
-        response = client.post("/messages", json=payload)
+        response = client.post("/api/v1/messages", json=payload)
 
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
 
@@ -53,7 +53,7 @@ class TestCreateMessage:
             "sender": "user-1",
             "content": "",
         }
-        response = client.post("/messages", json=payload)
+        response = client.post("/api/v1/messages", json=payload)
 
         assert response.status_code == status.HTTP_201_CREATED
         data = response.json()
@@ -61,15 +61,15 @@ class TestCreateMessage:
 
 
 class TestGetRoomMessages:
-    """Tests for GET /rooms/{room_id}/messages endpoint."""
+    """Tests for GET /api/v1/rooms/{room_id}/messages endpoint."""
 
     def test_get_messages_with_pagination(self, client):
-        """Read path: GET /rooms/{room_id}/messages returns list with pagination."""
+        """Read path: GET /api/v1/rooms/{room_id}/messages returns list with pagination."""
         # Create multiple messages
         room_id = "room-456"
         for i in range(5):
             client.post(
-                "/messages",
+                "/api/v1/messages",
                 json={
                     "room_id": room_id,
                     "sender": f"user-{i}",
@@ -77,7 +77,7 @@ class TestGetRoomMessages:
                 },
             )
 
-        response = client.get(f"/rooms/{room_id}/messages?limit=3&offset=0")
+        response = client.get(f"/api/v1/rooms/{room_id}/messages?limit=3&offset=0")
 
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
@@ -93,7 +93,7 @@ class TestGetRoomMessages:
         room_id = "room-789"
         # Create some messages
         client.post(
-            "/messages",
+            "/api/v1/messages",
             json={
                 "room_id": room_id,
                 "sender": "user-1",
@@ -102,7 +102,7 @@ class TestGetRoomMessages:
         )
 
         # Request with offset beyond available messages
-        response = client.get(f"/rooms/{room_id}/messages?limit=10&offset=100")
+        response = client.get(f"/api/v1/rooms/{room_id}/messages?limit=10&offset=100")
 
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
@@ -113,7 +113,7 @@ class TestGetRoomMessages:
 
     def test_get_messages_nonexistent_room(self, client):
         """Edge case: room with no messages returns 404."""
-        response = client.get("/rooms/nonexistent-room/messages")
+        response = client.get("/api/v1/rooms/nonexistent-room/messages")
 
         assert response.status_code == status.HTTP_404_NOT_FOUND
         assert "not found" in response.json()["detail"].lower()
@@ -122,7 +122,7 @@ class TestGetRoomMessages:
         """Default pagination parameters work correctly."""
         room_id = "room-default"
         client.post(
-            "/messages",
+            "/api/v1/messages",
             json={
                 "room_id": room_id,
                 "sender": "user-1",
@@ -130,7 +130,7 @@ class TestGetRoomMessages:
             },
         )
 
-        response = client.get(f"/rooms/{room_id}/messages")
+        response = client.get(f"/api/v1/rooms/{room_id}/messages")
 
         assert response.status_code == status.HTTP_200_OK
         data = response.json()

@@ -2,15 +2,15 @@
 
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class MessageCreate(BaseModel):
     """Schema for creating a new message."""
 
-    room_id: str
-    sender: str
-    content: str
+    room_id: str = Field(..., min_length=1, max_length=100, description="Room identifier")
+    sender: str = Field(..., min_length=1, max_length=100, description="Message sender")
+    content: str = Field(..., max_length=5000, description="Message content")
 
     model_config = ConfigDict(from_attributes=True)
 
