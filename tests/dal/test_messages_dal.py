@@ -6,9 +6,9 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
+from app.dal.messages import create_message, get_messages_by_room
 from app.db.base import Base
 from app.models.message import Message
-from app.services.messages import create_message, get_messages_by_room
 from app.schemas.message import MessageCreate
 
 
