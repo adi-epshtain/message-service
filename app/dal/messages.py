@@ -1,13 +1,13 @@
 """Data access layer for message database operations."""
 
 from sqlalchemy import func, select
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.message import Message
 from app.schemas.message import MessageCreate
 
 
-def create_message(db: Session, data: MessageCreate) -> Message:
+async def create_message(db: AsyncSession, data: MessageCreate) -> Message:
     """Create and persist a new message.
 
     Args:
@@ -23,13 +23,13 @@ def create_message(db: Session, data: MessageCreate) -> Message:
         content=data.content,
     )
     db.add(message)
-    db.commit()
-    db.refresh(message)
+    await db.commit()
+    await db.refresh(message)
     return message
 
 
-def get_messages_by_room(
-    db: Session, room_id: str, limit: int, offset: int
+async def get_messages_by_room(
+    db: AsyncSession, room_id: str, limit: int, offset: int
 ) -> tuple[list[Message], int]:
     """Get paginated messages for a room.
 
@@ -44,7 +44,8 @@ def get_messages_by_room(
     """
     # Get total count
     count_query = select(func.count()).select_from(Message).where(Message.room_id == room_id)
-    total = db.scalar(count_query)
+    result = await db.execute(count_query)
+    total = result.scalar_one()
 
     # Get paginated messages ordered by created_at ascending
     messages_query = (
@@ -54,7 +55,8 @@ def get_messages_by_room(
         .limit(limit)
         .offset(offset)
     )
-    messages = list(db.scalars(messages_query).all())
+    result = await db.execute(messages_query)
+    messages = list(result.scalars().all())
 
     return messages, total
 

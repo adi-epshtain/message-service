@@ -2,11 +2,11 @@
 
 import os
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, AsyncGenerator
 
 from fastapi import Depends
-from sqlalchemy import create_engine
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.orm import DeclarativeBase
 
 from app.db.base import Base
 
@@ -18,30 +18,32 @@ if not SQLALCHEMY_DATABASE_URL:
     # Ensure parent directory exists
     db_path = Path(DB_PATH)
     db_path.parent.mkdir(parents=True, exist_ok=True)
-    SQLALCHEMY_DATABASE_URL = f"sqlite:///{db_path}"
+    SQLALCHEMY_DATABASE_URL = f"sqlite+aiosqlite:///{db_path}"
+else:
+    # Convert sync URL to async if needed
+    if SQLALCHEMY_DATABASE_URL.startswith("sqlite:///"):
+        SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("sqlite:///", "sqlite+aiosqlite:///")
 
-# SQLite-specific connection args (only for SQLite)
-connect_args = {}
-if SQLALCHEMY_DATABASE_URL.startswith("sqlite"):
-    connect_args = {"check_same_thread": False}
-
-engine = create_engine(
+engine = create_async_engine(
     SQLALCHEMY_DATABASE_URL,
-    connect_args=connect_args,
     echo=False,
 )
 
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+AsyncSessionLocal = async_sessionmaker(
+    engine,
+    class_=AsyncSession,
+    expire_on_commit=False,
+)
 
 
-def get_db() -> Session:
-    """FastAPI dependency for database session."""
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+async def get_db() -> AsyncGenerator[AsyncSession, None]:
+    """FastAPI dependency for async database session."""
+    async with AsyncSessionLocal() as session:
+        try:
+            yield session
+        finally:
+            await session.close()
 
 
 # Type alias for dependency injection
-DbSession = Annotated[Session, Depends(get_db)]
+DbSession = Annotated[AsyncSession, Depends(get_db)]

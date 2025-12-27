@@ -14,7 +14,7 @@ router = APIRouter(prefix="/api/v1", tags=["messages"])
 
 
 @router.post("/messages", response_model=MessageRead, status_code=201)
-def create_message_endpoint(
+async def create_message_endpoint(
     data: MessageCreate,
     db: DbSession,
 ) -> MessageRead:
@@ -31,12 +31,12 @@ def create_message_endpoint(
         HTTPException: If database error occurs.
     """
     try:
-        message: Message = create_message(db, data)
+        message: Message = await create_message(db, data)
         logger.info("Message created", extra={"message_id": message.id, "room_id": message.room_id})
         return MessageRead.model_validate(message)
     except SQLAlchemyError as e:
         logger.error("Database error creating message", extra={"error": str(e)})
-        db.rollback()
+        await db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to create message",
@@ -44,7 +44,7 @@ def create_message_endpoint(
 
 
 @router.get("/rooms/{room_id}/messages", response_model=PaginatedMessages)
-def get_room_messages(
+async def get_room_messages(
     room_id: str,
     db: DbSession,
     limit: int = Query(default=20, ge=1, le=100, description="Maximum number of messages to return"),
@@ -65,7 +65,7 @@ def get_room_messages(
         HTTPException: If room does not exist (404) or database error occurs (500).
     """
     try:
-        messages, total = get_messages_by_room(db, room_id, limit, offset)
+        messages, total = await get_messages_by_room(db, room_id, limit, offset)
         
         # Optional: Return 404 if room has never had messages (first page, no results)
         if total == 0 and offset == 0:

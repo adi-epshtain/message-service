@@ -1,13 +1,13 @@
 """Message business logic services."""
 
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.dal.messages import create_message as dal_create_message, get_messages_by_room as dal_get_messages_by_room
 from app.models.message import Message
 from app.schemas.message import MessageCreate
 
 
-def create_message(db: Session, data: MessageCreate) -> Message:
+async def create_message(db: AsyncSession, data: MessageCreate) -> Message:
     """Create a new message.
 
     Args:
@@ -17,11 +17,11 @@ def create_message(db: Session, data: MessageCreate) -> Message:
     Returns:
         The created message instance.
     """
-    return dal_create_message(db, data)
+    return await dal_create_message(db, data)
 
 
-def get_messages_by_room(
-    db: Session, room_id: str, limit: int, offset: int
+async def get_messages_by_room(
+    db: AsyncSession, room_id: str, limit: int, offset: int
 ) -> tuple[list[Message], int]:
     """Get paginated messages for a room.
 
@@ -34,4 +34,4 @@ def get_messages_by_room(
     Returns:
         Tuple of (messages list, total count).
     """
-    return dal_get_messages_by_room(db, room_id, limit, offset)
+    return await dal_get_messages_by_room(db, room_id, limit, offset)

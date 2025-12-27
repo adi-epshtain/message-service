@@ -13,7 +13,8 @@ from app.models import Message  # noqa: F401 - Import to register models
 async def lifespan(app: FastAPI):
     """Lifespan event handler for startup and shutdown."""
     # Startup
-    Base.metadata.create_all(bind=engine)
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
     yield
     # Shutdown (if needed in the future)
 
