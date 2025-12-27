@@ -25,7 +25,7 @@ class TestCreateMessage:
         assert "created_at" in data
 
     def test_create_message_missing_field(self, client):
-        """Validation error: missing required field returns 422."""
+        """Validation error: POST /api/v1/messages with missing required field returns 422."""
         payload = {
             "room_id": "room-123",
             "sender": "user-1",
@@ -36,7 +36,7 @@ class TestCreateMessage:
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
 
     def test_create_message_invalid_field_type(self, client):
-        """Validation error: invalid field type returns 422."""
+        """Validation error: POST /api/v1/messages with invalid field type returns 422."""
         payload = {
             "room_id": 123,  # Should be string
             "sender": "user-1",
@@ -47,7 +47,7 @@ class TestCreateMessage:
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
 
     def test_create_message_empty_content(self, client):
-        """Validation error: empty content should be allowed (valid string)."""
+        """Validation: POST /api/v1/messages with empty content should be allowed (valid string)."""
         payload = {
             "room_id": "room-123",
             "sender": "user-1",
@@ -89,7 +89,7 @@ class TestGetRoomMessages:
         assert all("created_at" in item for item in data["items"])
 
     def test_get_messages_empty_result(self, client):
-        """Edge case: pagination beyond available messages returns empty list (200)."""
+        """Edge case: GET /api/v1/rooms/{room_id}/messages with pagination beyond available messages returns empty list (200)."""
         room_id = "room-789"
         # Create some messages
         client.post(
@@ -112,14 +112,14 @@ class TestGetRoomMessages:
         assert data["offset"] == 100
 
     def test_get_messages_nonexistent_room(self, client):
-        """Edge case: room with no messages returns 404."""
+        """Edge case: GET /api/v1/rooms/{room_id}/messages for room with no messages returns 404."""
         response = client.get("/api/v1/rooms/nonexistent-room/messages")
 
         assert response.status_code == status.HTTP_404_NOT_FOUND
         assert "not found" in response.json()["detail"].lower()
 
     def test_get_messages_default_pagination(self, client):
-        """Default pagination parameters work correctly."""
+        """Default pagination parameters work correctly for GET /api/v1/rooms/{room_id}/messages."""
         room_id = "room-default"
         client.post(
             "/api/v1/messages",

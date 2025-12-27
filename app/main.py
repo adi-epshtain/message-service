@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
+from app.api.health import router as health_router
 from app.api.messages import router as messages_router
 from app.db.base import Base
 from app.db.session import engine
@@ -25,6 +26,7 @@ app = FastAPI(
 )
 
 
+app.include_router(health_router)
 app.include_router(messages_router)
 
 
